@@ -1,0 +1,3256 @@
+basePath: /
+definitions:
+  models.AssignPackageRequest:
+    properties:
+      package_id:
+        type: integer
+    required:
+    - package_id
+    type: object
+  models.CreateBusinessRequest:
+    properties:
+      email:
+        type: string
+      location:
+        type: string
+      name:
+        type: string
+      owner_name:
+        type: string
+      package_id:
+        description: optional
+        type: integer
+      password:
+        minLength: 6
+        type: string
+      phone:
+        type: string
+      slug:
+        type: string
+    required:
+    - email
+    - name
+    - owner_name
+    - password
+    - slug
+    type: object
+  models.CreatePackageRequest:
+    properties:
+      description:
+        type: string
+      name:
+        type: string
+      price:
+        minimum: 0
+        type: number
+      validation_period:
+        minimum: 1
+        type: integer
+    required:
+    - name
+    - price
+    - validation_period
+    type: object
+  models.CreateStudentRequest:
+    properties:
+      business_id:
+        type: integer
+      guardian_email:
+        type: string
+      guardian_name:
+        type: string
+      guardian_number:
+        type: string
+      information:
+        $ref: '#/definitions/models.JSONB'
+      name:
+        type: string
+      user_id:
+        type: integer
+    required:
+    - business_id
+    - name
+    - user_id
+    type: object
+  models.CreateTeacherRequest:
+    properties:
+      business_id:
+        type: integer
+      description:
+        type: string
+      experience:
+        type: string
+      name:
+        type: string
+      qualification:
+        type: string
+      salary:
+        type: number
+      user_id:
+        type: integer
+    required:
+    - business_id
+    - name
+    - user_id
+    type: object
+  models.CreateUserRequest:
+    properties:
+      email:
+        type: string
+      name:
+        type: string
+      password:
+        minLength: 6
+        type: string
+      phone:
+        type: string
+      role:
+        allOf:
+        - $ref: '#/definitions/models.UserRole'
+        enum:
+        - admin
+        - business
+        - teacher
+        - student
+    required:
+    - email
+    - name
+    - password
+    type: object
+  models.JSONB:
+    additionalProperties: true
+    type: object
+  models.LoginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  models.UpdateBusinessRequest:
+    properties:
+      email:
+        type: string
+      location:
+        type: string
+      name:
+        type: string
+      owner_name:
+        type: string
+      package_id:
+        type: integer
+      password:
+        minLength: 6
+        type: string
+      phone:
+        type: string
+      slug:
+        type: string
+      status:
+        description: pointer to allow null/zero values
+        type: integer
+    type: object
+  models.UpdateStudentRequest:
+    properties:
+      guardian_email:
+        type: string
+      guardian_name:
+        type: string
+      guardian_number:
+        type: string
+      information:
+        $ref: '#/definitions/models.JSONB'
+      name:
+        type: string
+      status:
+        type: integer
+    type: object
+  models.UpdateTeacherRequest:
+    properties:
+      description:
+        type: string
+      experience:
+        type: string
+      name:
+        type: string
+      qualification:
+        type: string
+      salary:
+        type: number
+      status:
+        type: integer
+    type: object
+  models.UserRole:
+    enum:
+    - admin
+    - business
+    - teacher
+    - student
+    type: string
+    x-enum-varnames:
+    - RoleAdmin
+    - RoleBusiness
+    - RoleTeacher
+    - RoleStudent
+host: localhost:8080
+info:
+  contact: {}
+  description: A user management REST API with authentication and role-based access
+    control
+  title: User Management API
+  version: "1.0"
+paths:
+  /api/business/{slug}:
+    get:
+      consumes:
+      - application/json
+      description: Get a specific business by slug (no authentication required)
+      parameters:
+      - description: Business slug
+        in: path
+        name: slug
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response with business data
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Business not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get business by slug (Public)
+      tags:
+      - businesses
+  /api/businesses:
+    get:
+      consumes:
+      - application/json
+      description: Get all businesses with pagination and filters (Admin only)
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Items per page
+        in: query
+        name: limit
+        type: integer
+      - description: Filter by status (0=inactive, 1=active)
+        in: query
+        name: status
+        type: integer
+      - description: Filter by package ID
+        in: query
+        name: package_id
+        type: integer
+      - description: Filter by location
+        in: query
+        name: location
+        type: string
+      - description: Search in name, owner name, email, location, or slug
+        in: query
+        name: search
+        type: string
+      - description: Sort by field (name, owner_name, email, location, status, created_on)
+        in: query
+        name: sort_by
+        type: string
+      - default: desc
+        description: Sort order (asc, desc)
+        in: query
+        name: sort_order
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response with businesses list
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get all businesses
+      tags:
+      - businesses
+    post:
+      consumes:
+      - application/json
+      description: Create a new business with the provided information (Admin only)
+      parameters:
+      - description: Business data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.CreateBusinessRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Success response with business data
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create a new business
+      tags:
+      - businesses
+  /api/businesses/{businessId}/students:
+    get:
+      consumes:
+      - application/json
+      description: Get all students for a specific business
+      parameters:
+      - description: Business ID
+        in: path
+        name: businessId
+        required: true
+        type: integer
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Items per page
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response with students list
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get students by business
+      tags:
+      - students
+  /api/businesses/{businessId}/students/active:
+    get:
+      consumes:
+      - application/json
+      description: Get all active students for a specific business
+      parameters:
+      - description: Business ID
+        in: path
+        name: businessId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response with active students list
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get active students by business
+      tags:
+      - students
+  /api/businesses/{businessId}/students/inactive:
+    get:
+      consumes:
+      - application/json
+      description: Get all inactive students for a specific business
+      parameters:
+      - description: Business ID
+        in: path
+        name: businessId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response with inactive students list
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get inactive students by business
+      tags:
+      - students
+  /api/businesses/{businessId}/teachers:
+    get:
+      consumes:
+      - application/json
+      description: Get all teachers for a specific business
+      parameters:
+      - description: Business ID
+        in: path
+        name: businessId
+        required: true
+        type: integer
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Items per page
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response with teachers list
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get teachers by business
+      tags:
+      - teachers
+  /api/businesses/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a business (Admin only)
+      parameters:
+      - description: Business ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success message
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Business not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Delete business
+      tags:
+      - businesses
+    get:
+      consumes:
+      - application/json
+      description: Get a specific business by ID (Admin only)
+      parameters:
+      - description: Business ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response with business data
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Business not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get business by ID
+      tags:
+      - businesses
+    put:
+      consumes:
+      - application/json
+      description: Update business information (Admin only)
+      parameters:
+      - description: Business ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Business update data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.UpdateBusinessRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response with updated business data
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Business not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update business
+      tags:
+      - businesses
+  /api/businesses/{id}/assign-package:
+    post:
+      consumes:
+      - application/json
+      description: Assign a package to a business (Admin only)
+      parameters:
+      - description: Business ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Package assignment data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.AssignPackageRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success message
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Assign package to business
+      tags:
+      - businesses
+  /api/businesses/{id}/remove-package:
+    delete:
+      consumes:
+      - application/json
+      description: Remove package assignment from a business (Admin only)
+      parameters:
+      - description: Business ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success message
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Remove package from business
+      tags:
+      - businesses
+  /api/businesses/{id}/status:
+    patch:
+      consumes:
+      - application/json
+      description: Change the status of a business (Admin only)
+      parameters:
+      - description: Business ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Status data
+        in: body
+        name: request
+        required: true
+        schema:
+          additionalProperties:
+            type: integer
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success message
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Business not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Change business status
+      tags:
+      - businesses
+  /api/businesses/active:
+    get:
+      consumes:
+      - application/json
+      description: Get all active businesses (Admin only)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response with active businesses list
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get active businesses
+      tags:
+      - businesses
+  /api/businesses/bulk/assign-package:
+    post:
+      consumes:
+      - application/json
+      description: Assign a package to multiple businesses (Admin only)
+      parameters:
+      - description: Bulk assignment data with business_ids and package_id
+        in: body
+        name: request
+        required: true
+        schema:
+          additionalProperties: true
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success message
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Bulk assign package to businesses
+      tags:
+      - businesses
+  /api/businesses/bulk/status:
+    post:
+      consumes:
+      - application/json
+      description: Update status for multiple businesses (Admin only)
+      parameters:
+      - description: Bulk update data with business_ids and status
+        in: body
+        name: request
+        required: true
+        schema:
+          additionalProperties: true
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success message
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Bulk update business status
+      tags:
+      - businesses
+  /api/businesses/by-location:
+    get:
+      consumes:
+      - application/json
+      description: Get all businesses filtered by location (Admin only)
+      parameters:
+      - description: Location filter
+        in: query
+        name: location
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response with businesses list
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get businesses by location
+      tags:
+      - businesses
+  /api/businesses/inactive:
+    get:
+      consumes:
+      - application/json
+      description: Get all inactive businesses (Admin only)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response with inactive businesses list
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get inactive businesses
+      tags:
+      - businesses
+  /api/businesses/locations:
+    get:
+      consumes:
+      - application/json
+      description: Get a list of all unique business locations (Admin only)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response with locations list
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get all business locations
+      tags:
+      - businesses
+  /api/businesses/no-package:
+    get:
+      consumes:
+      - application/json
+      description: Get all businesses that don't have any package assigned (Admin
+        only)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response with businesses list
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get businesses without package
+      tags:
+      - businesses
+  /api/businesses/package/{packageId}:
+    get:
+      consumes:
+      - application/json
+      description: Get all businesses assigned to a specific package (Admin only)
+      parameters:
+      - description: Package ID
+        in: path
+        name: packageId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response with businesses list
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get businesses by package
+      tags:
+      - businesses
+  /api/businesses/search:
+    get:
+      consumes:
+      - application/json
+      description: Search businesses by name, owner name, email, location, or slug
+        (Admin only)
+      parameters:
+      - description: Search term
+        in: query
+        name: q
+        required: true
+        type: string
+      - default: 10
+        description: Maximum number of results
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response with search results
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Search businesses
+      tags:
+      - businesses
+  /api/businesses/stats:
+    get:
+      consumes:
+      - application/json
+      description: Get business statistics (Admin only)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response with statistics
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get business statistics
+      tags:
+      - businesses
+  /api/businesses/stats/locations:
+    get:
+      consumes:
+      - application/json
+      description: Get business location statistics (Admin only)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response with location statistics
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get location statistics
+      tags:
+      - businesses
+  /api/businesses/stats/packages:
+    get:
+      consumes:
+      - application/json
+      description: Get statistics of package distribution among businesses (Admin
+        only)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response with package distribution statistics
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get package distribution statistics
+      tags:
+      - businesses
+  /api/login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticate user and return token
+      parameters:
+      - description: Login credentials
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response with token and user data
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Invalid credentials
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: User login
+      tags:
+      - auth
+  /api/my-business:
+    get:
+      consumes:
+      - application/json
+      description: Get current user's business profile (Business users only)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response with business data
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Business profile not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get my business profile
+      tags:
+      - business-profile
+    put:
+      consumes:
+      - application/json
+      description: Update current user's business profile (Business users only)
+      parameters:
+      - description: Business update data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.UpdateBusinessRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response with updated business data
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Business profile not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update my business profile
+      tags:
+      - business-profile
+  /api/my-student-profile:
+    get:
+      consumes:
+      - application/json
+      description: Get current user's student profile (Student users only)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response with student data
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Student profile not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get my student profile
+      tags:
+      - student-profile
+    put:
+      consumes:
+      - application/json
+      description: Update current user's student profile (Student users only)
+      parameters:
+      - description: Student update data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.UpdateStudentRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response with updated student data
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update my student profile
+      tags:
+      - student-profile
+  /api/my-teacher-profile:
+    get:
+      consumes:
+      - application/json
+      description: Get current user's teacher profile (Teacher users only)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response with teacher data
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Teacher profile not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get my teacher profile
+      tags:
+      - teacher-profile
+    put:
+      consumes:
+      - application/json
+      description: Update current user's teacher profile (Teacher users only)
+      parameters:
+      - description: Teacher update data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.UpdateTeacherRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response with updated teacher data
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update my teacher profile
+      tags:
+      - teacher-profile
+  /api/packages:
+    get:
+      consumes:
+      - application/json
+      description: Get all packages with pagination and filters
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Items per page
+        in: query
+        name: limit
+        type: integer
+      - description: Filter by status (0=inactive, 1=active)
+        in: query
+        name: status
+        type: integer
+      - description: Minimum price filter
+        in: query
+        name: min_price
+        type: number
+      - description: Maximum price filter
+        in: query
+        name: max_price
+        type: number
+      - description: Minimum validation period filter (days)
+        in: query
+        name: min_period
+        type: integer
+      - description: Maximum validation period filter (days)
+        in: query
+        name: max_period
+        type: integer
+      - description: Search in name or description
+        in: query
+        name: search
+        type: string
+      - description: Sort by field (name, price, validation_period, created_on)
+        in: query
+        name: sort_by
+        type: string
+      - default: desc
+        description: Sort order (asc, desc)
+        in: query
+        name: sort_order
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response with packages list
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get all packages
+      tags:
+      - packages
+    post:
+      consumes:
+      - application/json
+      description: Create a new package with the provided information (Admin/Business
+        only)
+      parameters:
+      - description: Package data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.CreatePackageRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Success response with package data
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "409":
+          description: Package name already exists
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create a new package
+      tags:
+      - packages
+  /api/packages/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a package (Admin/Business only)
+      parameters:
+      - description: Package ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success message
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Package not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Delete package
+      tags:
+      - packages
+    get:
+      consumes:
+      - application/json
+      description: Get a specific package by ID
+      parameters:
+      - description: Package ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response with package data
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Package not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get package by ID
+      tags:
+      - packages
+    put:
+      consumes:
+      - application/json
+      description: Update package information (Admin/Business only)
+      parameters:
+      - description: Package ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Update data
+        in: body
+        name: request
+        required: true
+        schema:
+          additionalProperties: true
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response with updated package data
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Package not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "409":
+          description: Package name already exists
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update package
+      tags:
+      - packages
+  /api/packages/{id}/status:
+    patch:
+      consumes:
+      - application/json
+      description: Change the status of a package (Admin/Business only)
+      parameters:
+      - description: Package ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Status data
+        in: body
+        name: request
+        required: true
+        schema:
+          additionalProperties:
+            type: integer
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success message
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Package not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Change package status
+      tags:
+      - packages
+  /api/packages/active:
+    get:
+      consumes:
+      - application/json
+      description: Get all active packages
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response with active packages list
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get active packages
+      tags:
+      - packages
+  /api/packages/bulk/status:
+    patch:
+      consumes:
+      - application/json
+      description: Update status for multiple packages (Admin/Business only)
+      parameters:
+      - description: Bulk update data with package_ids and status
+        in: body
+        name: request
+        required: true
+        schema:
+          additionalProperties: true
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success message
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Bulk update package status
+      tags:
+      - packages
+  /api/packages/inactive:
+    get:
+      consumes:
+      - application/json
+      description: Get all inactive packages (Admin/Business only)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response with inactive packages list
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get inactive packages
+      tags:
+      - packages
+  /api/packages/price-range:
+    get:
+      consumes:
+      - application/json
+      description: Get packages within a specific price range
+      parameters:
+      - description: Minimum price
+        in: query
+        name: min_price
+        type: number
+      - description: Maximum price
+        in: query
+        name: max_price
+        type: number
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response with packages list
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get packages by price range
+      tags:
+      - packages
+  /api/packages/search:
+    get:
+      consumes:
+      - application/json
+      description: Search packages by name or description
+      parameters:
+      - description: Search term
+        in: query
+        name: q
+        required: true
+        type: string
+      - default: 10
+        description: Maximum number of results
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response with search results
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Search packages
+      tags:
+      - packages
+  /api/packages/stats:
+    get:
+      consumes:
+      - application/json
+      description: Get package statistics (Admin/Business only)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response with statistics
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get package statistics
+      tags:
+      - packages
+  /api/packages/stats/prices:
+    get:
+      consumes:
+      - application/json
+      description: Get package price statistics (Admin/Business only)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response with price statistics
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get price statistics
+      tags:
+      - packages
+  /api/profile:
+    get:
+      consumes:
+      - application/json
+      description: Get the profile of the currently logged-in user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response with user profile
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get current user profile
+      tags:
+      - profile
+    put:
+      consumes:
+      - application/json
+      description: Update the profile of the currently logged-in user
+      parameters:
+      - description: Update data (name, phone, password)
+        in: body
+        name: request
+        required: true
+        schema:
+          additionalProperties: true
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response with updated user profile
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update current user profile
+      tags:
+      - profile
+  /api/register:
+    post:
+      consumes:
+      - application/json
+      description: Register a new user with the provided information
+      parameters:
+      - description: User registration data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.CreateUserRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Success response with token and user data
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "409":
+          description: Email already exists
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Register a new user
+      tags:
+      - auth
+  /api/students:
+    get:
+      consumes:
+      - application/json
+      description: Get all students with pagination and filters (Admin only)
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Items per page
+        in: query
+        name: limit
+        type: integer
+      - description: Filter by status (0=inactive, 1=active)
+        in: query
+        name: status
+        type: integer
+      - description: Filter by business ID
+        in: query
+        name: business_id
+        type: integer
+      - description: Filter by guardian name
+        in: query
+        name: guardian_name
+        type: string
+      - description: Filter by guardian email
+        in: query
+        name: guardian_email
+        type: string
+      - description: Search in name, guardian info
+        in: query
+        name: search
+        type: string
+      - description: Sort by field
+        in: query
+        name: sort_by
+        type: string
+      - default: desc
+        description: Sort order (asc, desc)
+        in: query
+        name: sort_order
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response with students list
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get all students
+      tags:
+      - students
+    post:
+      consumes:
+      - application/json
+      description: Create a new student (Admin/Business only)
+      parameters:
+      - description: Student data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.CreateStudentRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Success response with student data
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create a new student
+      tags:
+      - students
+  /api/students/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a student (Admin only)
+      parameters:
+      - description: Student ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success message
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Delete student
+      tags:
+      - students
+    get:
+      consumes:
+      - application/json
+      description: Get a specific student by ID
+      parameters:
+      - description: Student ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response with student data
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Student not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get student by ID
+      tags:
+      - students
+    put:
+      consumes:
+      - application/json
+      description: Update student information
+      parameters:
+      - description: Student ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Student update data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.UpdateStudentRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response with updated student data
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update student
+      tags:
+      - students
+  /api/students/{id}/status:
+    patch:
+      consumes:
+      - application/json
+      description: Change the status of a student
+      parameters:
+      - description: Student ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Status data
+        in: body
+        name: request
+        required: true
+        schema:
+          additionalProperties:
+            type: integer
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success message
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Change student status
+      tags:
+      - students
+  /api/students/active:
+    get:
+      consumes:
+      - application/json
+      description: Get all active students
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response with active students list
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get active students
+      tags:
+      - students
+  /api/students/bulk/status:
+    post:
+      consumes:
+      - application/json
+      description: Update status for multiple students
+      parameters:
+      - description: Bulk update data
+        in: body
+        name: request
+        required: true
+        schema:
+          additionalProperties: true
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success message
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Bulk update student status
+      tags:
+      - students
+  /api/students/inactive:
+    get:
+      consumes:
+      - application/json
+      description: Get all inactive students
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response with inactive students list
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get inactive students
+      tags:
+      - students
+  /api/students/search:
+    get:
+      consumes:
+      - application/json
+      description: Search students by name, guardian name, email, or number
+      parameters:
+      - description: Search term
+        in: query
+        name: q
+        required: true
+        type: string
+      - default: 10
+        description: Maximum number of results
+        in: query
+        name: limit
+        type: integer
+      - description: Filter by business ID
+        in: query
+        name: business_id
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response with search results
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Search students
+      tags:
+      - students
+  /api/students/stats:
+    get:
+      consumes:
+      - application/json
+      description: Get student statistics
+      parameters:
+      - description: Filter by business ID
+        in: query
+        name: business_id
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response with statistics
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get student statistics
+      tags:
+      - students
+  /api/students/stats/guardians:
+    get:
+      consumes:
+      - application/json
+      description: Get student guardian statistics
+      parameters:
+      - description: Filter by business ID
+        in: query
+        name: business_id
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response with guardian statistics
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get guardian statistics
+      tags:
+      - students
+  /api/teachers:
+    get:
+      consumes:
+      - application/json
+      description: Get all teachers with pagination and filters (Admin only)
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Items per page
+        in: query
+        name: limit
+        type: integer
+      - description: Filter by status (0=inactive, 1=active)
+        in: query
+        name: status
+        type: integer
+      - description: Filter by business ID
+        in: query
+        name: business_id
+        type: integer
+      - description: Filter by minimum salary
+        in: query
+        name: min_salary
+        type: number
+      - description: Filter by maximum salary
+        in: query
+        name: max_salary
+        type: number
+      - description: Filter by qualification
+        in: query
+        name: qualification
+        type: string
+      - description: Search in name, qualification, or experience
+        in: query
+        name: search
+        type: string
+      - description: Sort by field
+        in: query
+        name: sort_by
+        type: string
+      - default: desc
+        description: Sort order (asc, desc)
+        in: query
+        name: sort_order
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response with teachers list
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get all teachers
+      tags:
+      - teachers
+    post:
+      consumes:
+      - application/json
+      description: Create a new teacher (Admin/Business only)
+      parameters:
+      - description: Teacher data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.CreateTeacherRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Success response with teacher data
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create a new teacher
+      tags:
+      - teachers
+  /api/teachers/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a teacher (Admin only)
+      parameters:
+      - description: Teacher ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success message
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Delete teacher
+      tags:
+      - teachers
+    get:
+      consumes:
+      - application/json
+      description: Get a specific teacher by ID
+      parameters:
+      - description: Teacher ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response with teacher data
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Teacher not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get teacher by ID
+      tags:
+      - teachers
+    put:
+      consumes:
+      - application/json
+      description: Update teacher information
+      parameters:
+      - description: Teacher ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Teacher update data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.UpdateTeacherRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response with updated teacher data
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update teacher
+      tags:
+      - teachers
+  /api/teachers/{id}/status:
+    patch:
+      consumes:
+      - application/json
+      description: Change the status of a teacher
+      parameters:
+      - description: Teacher ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Status data
+        in: body
+        name: request
+        required: true
+        schema:
+          additionalProperties:
+            type: integer
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success message
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Change teacher status
+      tags:
+      - teachers
+  /api/teachers/active:
+    get:
+      consumes:
+      - application/json
+      description: Get all active teachers
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response with active teachers list
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get active teachers
+      tags:
+      - teachers
+  /api/teachers/bulk/salary:
+    post:
+      consumes:
+      - application/json
+      description: Update salary for multiple teachers
+      parameters:
+      - description: Bulk salary update data
+        in: body
+        name: request
+        required: true
+        schema:
+          additionalProperties: true
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success message
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Bulk update teacher salary
+      tags:
+      - teachers
+  /api/teachers/bulk/status:
+    post:
+      consumes:
+      - application/json
+      description: Update status for multiple teachers
+      parameters:
+      - description: Bulk update data
+        in: body
+        name: request
+        required: true
+        schema:
+          additionalProperties: true
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success message
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Bulk update teacher status
+      tags:
+      - teachers
+  /api/teachers/inactive:
+    get:
+      consumes:
+      - application/json
+      description: Get all inactive teachers
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response with inactive teachers list
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get inactive teachers
+      tags:
+      - teachers
+  /api/teachers/search:
+    get:
+      consumes:
+      - application/json
+      description: Search teachers by name, qualification, or experience
+      parameters:
+      - description: Search term
+        in: query
+        name: q
+        required: true
+        type: string
+      - default: 10
+        description: Maximum number of results
+        in: query
+        name: limit
+        type: integer
+      - description: Filter by business ID
+        in: query
+        name: business_id
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response with search results
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Search teachers
+      tags:
+      - teachers
+  /api/teachers/stats:
+    get:
+      consumes:
+      - application/json
+      description: Get teacher statistics
+      parameters:
+      - description: Filter by business ID
+        in: query
+        name: business_id
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response with statistics
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get teacher statistics
+      tags:
+      - teachers
+  /api/teachers/stats/qualifications:
+    get:
+      consumes:
+      - application/json
+      description: Get teacher qualification statistics
+      parameters:
+      - description: Filter by business ID
+        in: query
+        name: business_id
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response with qualification statistics
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get qualification statistics
+      tags:
+      - teachers
+  /api/teachers/stats/salary:
+    get:
+      consumes:
+      - application/json
+      description: Get teacher salary statistics
+      parameters:
+      - description: Filter by business ID
+        in: query
+        name: business_id
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response with salary statistics
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get salary statistics
+      tags:
+      - teachers
+  /api/users:
+    get:
+      consumes:
+      - application/json
+      description: Get all users with pagination and filters (Admin only)
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Items per page
+        in: query
+        name: limit
+        type: integer
+      - description: Filter by role (admin, business, teacher, student)
+        in: query
+        name: role
+        type: string
+      - description: Filter by status (0=inactive, 1=active)
+        in: query
+        name: status
+        type: integer
+      - description: Search in name or email
+        in: query
+        name: search
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response with users list
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get all users
+      tags:
+      - users
+  /api/users/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a user (Admin only)
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success message
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: User not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Delete user
+      tags:
+      - users
+    get:
+      consumes:
+      - application/json
+      description: Get a specific user by ID (Admin only)
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response with user data
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: User not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get user by ID
+      tags:
+      - users
+    put:
+      consumes:
+      - application/json
+      description: Update user information (Admin only)
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Update data
+        in: body
+        name: request
+        required: true
+        schema:
+          additionalProperties: true
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response with updated user data
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: User not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update user
+      tags:
+      - users
+  /api/users/{id}/promote:
+    post:
+      consumes:
+      - application/json
+      description: Promote a user to a higher role (Admin only)
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: New role data
+        in: body
+        name: request
+        required: true
+        schema:
+          additionalProperties:
+            type: string
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success message
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: User not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Promote user role
+      tags:
+      - users
+  /api/users/role/{role}:
+    get:
+      consumes:
+      - application/json
+      description: Get all users with a specific role (Admin only)
+      parameters:
+      - description: User role (admin, business, teacher, student)
+        in: path
+        name: role
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response with users list
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get users by role
+      tags:
+      - users
+  /api/users/stats/roles:
+    get:
+      consumes:
+      - application/json
+      description: Get count of users by role (Admin only)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response with statistics
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get role statistics
+      tags:
+      - users
+securityDefinitions:
+  BearerAuth:
+    description: Type "Bearer" followed by a space and JWT token.
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
